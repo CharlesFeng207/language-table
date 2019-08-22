@@ -1,0 +1,36 @@
+
+
+{% from "_formhelpers.html" import render_field %}
+<title>G03多语言注册系统</title>
+<h5>{{ info }}</h5>
+<a href="{{ url_for('inspect') }}">inspect</a>
+<a href="{{ url_for('download') }}">download</a>
+
+<form method=post action="/hello">
+  <dl>
+    {{ render_field(form.username) }}
+  </dl>
+  <p><input type=submit value=process>
+</form>
+
+<input type="text" value={{ copy_text }} id="copy_text">
+<button onclick="copyFunction()">Copy ID</button>
+
+<script>
+function copyFunction() {
+  var copyText = document.getElementById("copy_text");
+  copyText.select();
+  document.execCommand("copy");
+}
+</script>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+{% block body %}{% endblock %}
