@@ -35,17 +35,20 @@ class Table:
 
         print(self.error_txt)
 
-    def insert(self, cn):
+    def insert(self, cn, save=True):
         newid = self.max_id_value + 1
         self.table_dic[cn] = newid
         self.max_id_value += 1
 
-        self.workbook_src.save("backup")
+        if save:
+            self.workbook_src.save("backup")
 
         newrow = self.sheet_src.max_row + 1
         self.sheet_src["{}{}".format('B', newrow)].value = cn
         self.sheet_src["{}{}".format('A', newrow)].value = newid
-        self.workbook_src.save(self.path_src)
+
+        if save:
+            self.workbook_src.save(self.path_src)
 
         return newid
         
@@ -87,10 +90,12 @@ def hello():
 @app.route('/query')
 def query():
     content = request.args.get('content')
+    save = request.args.get('save') == "1"
+
     if content in table.table_dic:
         return str(table.table_dic[content])
     else:
-        return str(table.insert(content))
+        return str(table.insert(content, save))
 
 @app.route('/download')
 def download():
@@ -98,8 +103,8 @@ def download():
 
 @app.route('/test')
 def test():
-    # for i in range(0, 50):
-    #     table.insert("form.username.data {}".format(table.max_id_value + 1)) 
+    # for i in range(0, 5000):
+    #     table.insert("form.username.data {}".format(table.max_id_value + 1), False) 
     return "done"
       
 
