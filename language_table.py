@@ -73,11 +73,11 @@ def hello():
             flash_info = "输入为空"
         else:
             if form.username.data in table.table_dic:
-                flash_info = "{} 已经存在，id为{}".format(form.username.data, table.table_dic[form.username.data])
+                flash_info = "存在 \"{}\"，id为{}".format(form.username.data, table.table_dic[form.username.data])
                 copy_text = table.table_dic[form.username.data]
             else:
                 copy_text = table.insert(form.username.data)  
-                flash_info = "录入{}，id为{}".format(form.username.data, table.table_dic[form.username.data])
+                flash_info = "录入 \"{}\"，id为{}".format(form.username.data, table.table_dic[form.username.data])
                  
         flash(flash_info)
         # return redirect(url_for('hello'))
@@ -102,10 +102,6 @@ def test():
     #     table.insert("form.username.data {}".format(table.max_id_value + 1)) 
     return "done"
       
-
-@app.route('/inspect')
-def inspect():
-    return str(table.table_dic)
 
 if __name__ == '__main__':
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
