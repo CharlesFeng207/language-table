@@ -31,8 +31,7 @@ class Table:
             print("load complete!")
         except Exception as e:
             self.error_txt = "解析excel表时报错! {}".format(e)
-        pass
-
+        
         print(self.error_txt)
 
     def insert(self, cn, save=True):
