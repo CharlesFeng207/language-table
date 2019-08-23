@@ -40,21 +40,15 @@ class Table:
         self.table_dic[cn] = newid
         self.max_id_value += 1
 
-        table.backup()
+        self.workbook_src.save("backup")
 
         newrow = self.sheet_src.max_row + 1
         self.sheet_src["{}{}".format('B', newrow)].value = cn
         self.sheet_src["{}{}".format('A', newrow)].value = newid
         self.workbook_src.save(self.path_src)
-        return newid
 
-    def backup(self):
-        folder_name = "backup"
-        folder = os.path.exists(folder_name)
-        if not folder:                
-            os.makedirs(folder_name)
-        backup_path = os.path.join(folder_name, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
-        self.workbook_src.save(backup_path)
+        return newid
+        
 
 table = Table()
 table.load("Language.xlsx", "Language")
@@ -90,14 +84,22 @@ def hello():
     info = "正在托管{}，当前文本数量: {}".format(table.path_src, len(table.table_dic))
     return render_template('hello.html', form=form, info=info, copy_text=copy_text)
 
+@app.route('/query')
+def query():
+    content = request.args.get('content')
+    if content in table.table_dic:
+        return str(table.table_dic[content])
+    else:
+        return str(table.insert(content))
+
 @app.route('/download')
 def download():
    return send_file(table.path_src, cache_timeout=-1, as_attachment=True)
 
 @app.route('/test')
 def test():
-    for i in range(0, 100):
-        table.insert("form.username.data {}".format(table.max_id_value + 1)) 
+    # for i in range(0, 50):
+    #     table.insert("form.username.data {}".format(table.max_id_value + 1)) 
     return "done"
       
 
@@ -108,14 +110,4 @@ def inspect():
 if __name__ == '__main__':
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.secret_key = 'some_secret'
-    app.run(debug=True, host ="0.0.0.0")
-    
-# cell_value = sheet_src["{}{}".format('B', 5)].value
-
-# sheet_src[cell_name].value = "黄金2"
-# workbook_src.save(path_src)
-
-# print(cell_value)
-
-# for i in range(1, 10):
-#     print(get_column_letter(i))
+    app.run(debug=True, host ="0.0.0.0", threaded=True, processes=1)
