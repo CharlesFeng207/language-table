@@ -76,7 +76,7 @@ def hello():
                 flash_info = "{} 已经存在，id为{}".format(form.username.data, table.table_dic[form.username.data])
                 copy_text = table.table_dic[form.username.data]
             else:
-                copy_text = table.insert(form.username.data) 
+                copy_text = table.insert(form.username.data)  
                 flash_info = "录入{}，id为{}".format(form.username.data, table.table_dic[form.username.data])
                  
         flash(flash_info)
