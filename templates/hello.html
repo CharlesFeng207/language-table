@@ -3,7 +3,9 @@
 {% from "_formhelpers.html" import render_field %}
 <title>G03多语言注册系统</title>
 <h5>{{ info }}</h5>
-<a href="{{ url_for('download') }}">download</a>
+<a href="{{ url_for('getexcel') }}">下载excel</a>
+<a href="{{ url_for('getbytes') }}">下载bytes</a>
+
 
 <form method=post action="/hello">
   <dl>
