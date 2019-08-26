@@ -1,3 +1,4 @@
+# coding:utf-8
 from openpyxl import Workbook
 from openpyxl.reader.excel import load_workbook
 from openpyxl.utils import get_column_letter
@@ -9,23 +10,27 @@ import datetime
 import os
 import Language_pb2
 from Language_pb2 import LanguageTable, LanguageInfo
-
+import json
+from logger_init import LoggerInit
+import logging
 
 class Table:
     def __init__(self):
         self.error_txt = None
         self.table_dic = {}  # cn -> id
         self.max_id_value = 0
+        self.max_row = 0
         self.id_start_row = 3
 
     def load(self, path, shert_name):
         self.path_src = path
-        print("loading {}".format(self.path_src))
+        logging.info("loading {}".format(self.path_src))
 
         try:
-            self.workbook_src = load_workbook(self.path_src)
+            self.workbook_src = load_workbook(self.path_src, data_only=True)
             self.sheet_src = self.workbook_src[shert_name]
-            for i in range(self.id_start_row, self.sheet_src.max_row + 1):
+            self.max_row = self.sheet_src.max_row
+            for i in range(self.id_start_row, self.max_row + 1):
                 cn_value = self.get_lan(i,  Language_pb2.ch)
                 id_value = self.get_id(i)
                 self.max_id_value = max(self.max_id_value, id_value)
@@ -40,17 +45,16 @@ class Table:
         print(self.error_txt)
 
     def insert(self, cn, save=True):
-        newid = self.max_id_value + 1
-        self.table_dic[cn] = newid
-        self.max_id_value += 1
-
         if save:
             self.workbook_src.save("backup")
 
-        newrow = self.sheet_src.max_row + 1
+        newid = self.max_id_value + 1
+        self.table_dic[cn] = newid
+        self.max_id_value += 1
+        self.max_row += 1
 
-        self.sheet_src["{}{}".format('B', newrow)].value = cn
-        self.sheet_src["{}{}".format('A', newrow)].value = newid
+        self.sheet_src["{}{}".format('B', self.max_row)].value = cn
+        self.sheet_src["{}{}".format('A', self.max_row)].value = newid
 
         if save:
             self.workbook_src.save(self.path_src)
@@ -58,31 +62,15 @@ class Table:
         return newid
 
     def get_lan(self, row, lanType):
-
-        col = ""
-        if lanType == Language_pb2.ch:
-            col = "B"
-        elif lanType == Language_pb2.en:
-            col = "C"
-        elif lanType == Language_pb2.zh:
-            col = "D"
-        elif lanType == Language_pb2.jp:
-            col = "E"
-        elif lanType == Language_pb2.ko:
-            col = "F"
-        else:
-            raise Exception("unknown language type: " + lanType)
-
+        col = get_column_letter(lanType+2)  # cn 2 en 3 zh 4 jp 5 ko 6
         value = self.sheet_src["{}{}".format(col, row)].value
-        return value if value is not None else ""
+        return str(value) if value is not None else ""
 
     def get_id(self, row):
         return self.sheet_src["{}{}".format('A', row)].value
 
-
+LoggerInit.init(level=logging.INFO, filemode='a')
 table = Table()
-table.load("Language.xlsx", "Language")
-
 app = Flask(__name__)
 
 
@@ -144,17 +132,41 @@ def getbytes():
         info = LanguageInfo()
 
         info.id = table.get_id(i)
-        info.content.append(table.get_lan(i, Language_pb2.ch))
-        info.content.append(table.get_lan(i, Language_pb2.en))
-        info.content.append(table.get_lan(i, Language_pb2.zh))
-        info.content.append(table.get_lan(i, Language_pb2.jp))
-        info.content.append(table.get_lan(i, Language_pb2.ko))
+        for lantype in Language_pb2.LanguageType.values():
+            s = table.get_lan(i, lantype)
+            info.content.append(s)
+        print(info)
+        print(info.content)
         proto_table.infos.append(info)
+
+    print(proto_table)
 
     with open(bytes_path, "wb+") as f:
         f.write(proto_table.SerializeToString())
 
     return send_file(bytes_path, cache_timeout=-1, as_attachment=True)
+
+
+@app.route('/getjson')
+def getjson():
+    json_path = "language.json"
+    json_table = {}
+
+    for i in range(table.id_start_row, table.sheet_src.max_row + 1):
+        info = {}
+
+        info["id"] = table.get_id(i)
+        info["content"] = []
+
+        for lantype in Language_pb2.LanguageType.values():
+            info["content"].append(table.get_lan(i, lantype))
+
+        json_table[info["id"]] = info
+
+    with open(json_path, "w+") as f:
+        f.write(json.dumps(json_table, ensure_ascii=False))
+
+    return send_file(json_path, cache_timeout=-1, as_attachment=True)
 
 
 @app.route('/test')
@@ -170,7 +182,25 @@ def test():
     return "done"
 
 
+def mytest():
+    bytes_path = "language.bytes"
+    proto_table = LanguageTable()
+
+    for i in range(table.id_start_row, table.sheet_src.max_row + 1):
+        info = LanguageInfo()
+
+        info.id = table.get_id(i)
+        for lantype in Language_pb2.LanguageType.values():
+            info.content.append(table.get_lan(i, lantype))
+        proto_table.infos.append(info)
+
+    with open(bytes_path, "wb+") as f:
+        f.write(proto_table.SerializeToString())
+
+
 if __name__ == '__main__':
+    os.system("python --version")
+    table.load("Language.xlsx", "Language")
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.secret_key = 'some_secret'
-    app.run(debug=True, host="0.0.0.0", threaded=True, processes=1)
+    app.run(debug=True, host="0.0.0.0", threaded=True, processes=0)
