@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='Language.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0eLanguage.proto\"+\n\x0cLanguageInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0f\n\x07\x63ontent\x18\x02 \x03(\t\"-\n\rLanguageTable\x12\x1c\n\x05infos\x18\x01 \x03(\x0b\x32\r.LanguageInfo*6\n\x0cLanguageType\x12\x06\n\x02\x63h\x10\x00\x12\x06\n\x02\x65n\x10\x01\x12\x06\n\x02zh\x10\x02\x12\x06\n\x02jp\x10\x03\x12\x06\n\x02ko\x10\x04\x42-\n\x14\x63om.hyz.g03.protocol\xaa\x02\x14Google.Protobuf.Gameb\x06proto3')
+  serialized_pb=_b('\n\x0eLanguage.proto\"+\n\x0cLanguageInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0f\n\x07\x63ontent\x18\x02 \x03(\x0c\"-\n\rLanguageTable\x12\x1c\n\x05infos\x18\x01 \x03(\x0b\x32\r.LanguageInfo*6\n\x0cLanguageType\x12\x06\n\x02\x63h\x10\x00\x12\x06\n\x02\x65n\x10\x01\x12\x06\n\x02zh\x10\x02\x12\x06\n\x02jp\x10\x03\x12\x06\n\x02ko\x10\x04\x42-\n\x14\x63om.hyz.g03.protocol\xaa\x02\x14Google.Protobuf.Gameb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -83,7 +83,7 @@ _LANGUAGEINFO = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='content', full_name='LanguageInfo.content', index=1,
-      number=2, type=9, cpp_type=9, label=3,
+      number=2, type=12, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
