@@ -15,6 +15,7 @@ from logger_init import LoggerInit
 import logging
 from google.protobuf import text_format
 import shutil
+import requests
 
 
 class Table:
@@ -50,82 +51,144 @@ class Table:
 
         logging.error(self.error_txt)
 
-    def insert(self, cn, save=True):
-        if save:
-            if not os.path.exists(self.backup_folder):
-                os.mkdir(self.backup_folder)
-            shutil.copy(self.path_src, os.path.join(self.backup_folder, str(self.backup_order)))
-            self.backup_order=(self.backup_order + 1) % self.max_backup_count
+    def insert(self, cn):
+        newid = self.max_id_value + 1
 
-        newid=self.max_id_value + 1
-        self.table_dic[cn]=newid
+        self.table_dic[cn] = newid
         self.max_id_value += 1
         self.max_row += 1
-
-        self.sheet_src["{}{}".format('B', self.max_row)].value=cn
-        self.sheet_src["{}{}".format('A', self.max_row)].value=newid
-
-        if save:
-            self.workbook_src.save(self.path_src)
+        
+        self.sheet_src["{}{}".format('B', self.max_row)].value = cn
+        self.sheet_src["{}{}".format('A', self.max_row)].value = newid
 
         return newid
 
+    def remove(self, cn):
+        if cn not in self.table_dic:
+            return
+
+        lanId = self.table_dic[cn]
+
+        del self.table_dic[cn]
+
+        for i in range(self.id_start_row, self.max_row + 1):
+            id_value = self.get_id(i)
+            if id_value == lanId:
+                self.sheet_src.delete_rows(i, 1)
+
+        self.max_row = self.sheet_src.max_row
+
+    def save(self):
+        # backup first
+        if not os.path.exists(self.backup_folder):
+            os.mkdir(self.backup_folder)
+            shutil.copy(self.path_src, os.path.join(
+                self.backup_folder, str(self.backup_order)))
+            self.backup_order = (self.backup_order + 1) % self.max_backup_count
+
+        self.workbook_src.save(self.path_src)
+
     def get_lan(self, row, lanType):
-        col=get_column_letter(lanType+2)  # cn 2 en 3 zh 4 jp 5 ko 6
-        value=self.sheet_src["{}{}".format(col, row)].value
+        col = get_column_letter(lanType+2)  # cn 2 en 3 zh 4 jp 5 ko 6
+        value = self.sheet_src["{}{}".format(col, row)].value
         return str(value) if value is not None else ""
 
     def get_id(self, row):
-        return self.sheet_src["{}{}".format('A', row)].value
-
-
-LoggerInit.init(level=logging.INFO, filemode='a')
-table=Table()
-app=Flask(__name__)
-
+        return int(self.sheet_src["{}{}".format('A', row)].value)
+    pass
+pass
 
 class MyForm(Form):
-    username=TextField('简体中文 -> id：', [])
+    inputText = TextField('', [])
+    inputId = TextField('', [])
 
+# a hacky way to get but don't wait:
+def save_not_wait():
+    try:
+        requests.get("http://127.0.0.1:{}/save".format(flask_port),
+                     timeout=0.0000000001)
+    except requests.exceptions.ReadTimeout:
+        pass
+
+app = Flask(__name__)
 
 @app.route('/hello', methods=['GET', 'POST'])
 def hello():
     if table.error_txt is not None:
         return table.error_txt
 
-    copy_text=None
-    form=MyForm(request.form)
+    form = MyForm(request.form)
+
     if request.method == 'POST' and form.validate():
 
-        flash_info=None
+        flash_info = None
 
-        if not form.username.data:
-            flash_info="输入为空"
-        else:
-            if form.username.data in table.table_dic:
-                flash_info="存在 \"{}\"，id为{}".format(
-                    form.username.data, table.table_dic[form.username.data])
-                copy_text=table.table_dic[form.username.data]
+        if "录入简体中文" in request.form:
+            if not form.inputText.data:
+                flash_info = "text输入为空"
             else:
-                copy_text=table.insert(form.username.data)
-                flash_info="录入 \"{}\"，id为{}".format(
-                    form.username.data, table.table_dic[form.username.data])
+                if form.inputText.data in table.table_dic:
+                    flash_info = "存在 \"{}\"，id为{}".format(
+                        form.inputText.data, table.table_dic[form.inputText.data])
+                    form.inputId.data = table.table_dic[form.inputText.data]
+                else:
+                    form.inputId.data = table.insert(form.inputText.data)
+                    flash_info = "录入 \"{}\"，id为{}".format(
+                        form.inputText.data, table.table_dic[form.inputText.data])
+                    save_not_wait()
+                pass
+            pass
+        elif "查询ID" or "删除ID" in request.form:
+            if not form.inputId.data:
+                flash_info = "id输入为空"
+            else:
+                query_result = None
+                for cn, id in table.table_dic.items():
+                    if str(id) == form.inputId.data:
+                        query_result = cn
+                        break
+                if query_result is None:
+                    flash_info = "id {} 未找到".format(form.inputId.data)
+                else:
+                    flash_info = "id:{} -> {}".format(id, query_result)
+                    if "删除ID" in request.form:
+                        return "未开放!"
+                        # table.remove(query_result)
+                        # flash_info += ", 已删除!"
+                        # save_not_wait()
+                    pass
+                pass
+            pass
+        else:
+            return "unknown action"
 
         flash(flash_info)
-        # return redirect(url_for('hello'))
-    info="正在托管{}，当前文本数量: {}".format(table.path_src, len(table.table_dic))
-    return render_template('hello.html', form=form, info=info, copy_text=copy_text)
+
+    info = "正在托管{}，当前文本数量: {}".format(table.path_src, len(table.table_dic))
+    return render_template('hello.html', myform=form, info=info)
 
 
 @app.route('/query')
 def query():
-    content=request.args.get('content')
-    save=request.args.get('save') == "1"
+    content = request.args.get('content')
+    save = request.args.get('save') == "1"
 
+    result = None
     if content in table.table_dic:
-        return str(table.table_dic[content])
+        result = str(table.table_dic[content])
     else:
-        return str(table.insert(content, save))
+        result = str(table.insert(content))
+
+    if save:
+        save_not_wait()
+
+    return result
+
+
+@app.route('/save')
+def save():
+    table.save()
+    return "done"
 
 
 @app.route('/getexcel')
@@ -135,15 +198,15 @@ def getexcel():
 
 @app.route('/getbytes')
 def getbytes():
-    bytes_path="language.bytes"
-    proto_table=LanguageTable()
+    bytes_path = "language.bytes"
+    proto_table = LanguageTable()
 
     for i in range(table.id_start_row, table.sheet_src.max_row + 1):
-        info=LanguageInfo()
+        info = LanguageInfo()
 
-        info.id=table.get_id(i)
+        info.id = table.get_id(i)
         for lantype in Language_pb2.LanguageType.values():
-            s=table.get_lan(i, lantype)
+            s = table.get_lan(i, lantype)
             info.content.append(s.encode('utf-8'))
         proto_table.infos.append(info)
 
@@ -155,19 +218,19 @@ def getbytes():
 
 @app.route('/getjson')
 def getjson():
-    json_path="language.json"
-    json_table={}
+    json_path = "language.json"
+    json_table = {}
 
     for i in range(table.id_start_row, table.sheet_src.max_row + 1):
-        info={}
+        info = {}
 
-        info["id"]=table.get_id(i)
-        info["content"]=[]
+        info["id"] = table.get_id(i)
+        info["content"] = []
 
         for lantype in Language_pb2.LanguageType.values():
             info["content"].append(table.get_lan(i, lantype))
 
-        json_table[info["id"]]=info
+        json_table[info["id"]] = info
 
     with open(json_path, "w+") as f:
         f.write(json.dumps(json_table, ensure_ascii=False))
@@ -188,8 +251,13 @@ def test():
     return "done"
 
 
-if __name__ == '__main__':
+flask_port = 5000
+LoggerInit.init(level=logging.INFO, filemode='a')
+table = Table()
+
+if __name__ == "__main__":
     table.load("Language.xlsx", "Language")
-    app.config['SEND_FILE_MAX_AGE_DEFAULT']=0
-    app.secret_key='some_secret'
-    app.run(debug=True, host="0.0.0.0", threaded=True, processes=0)
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    app.secret_key = 'some_secret'
+    app.run(debug=True, host="0.0.0.0", threaded=False, processes=0, port=5000)
+    
