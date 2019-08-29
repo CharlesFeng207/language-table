@@ -4,30 +4,58 @@
 <a href="{{ url_for('getexcel') }}">下载excel</a>
 <a href="{{ url_for('getjson') }}">下载json</a>
 <a href="{{ url_for('getbytes') }}">下载bytes</a>
-
+<a href="{{ url_for('history') }}">查看历史</a>
 
 <style>
   input{
     width: 100%;
-    height: 60px;
-  }
-  input{
+    height: 45px;
     text-align: center;
   }
-  button{
-    width: 100%;
-    height: 60px;
-  }
+
+ .btn{
+            margin: 5 auto;
+            background-color:rgb(71, 110, 184);
+            color:aliceblue;
+            width: 100%;
+            height: 45px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            line-height: 45px;
+            border-radius: 15px;
+        }
+                .btn:hover{
+            background-color:rgb(59, 84, 128);
+        }
+
+        .btn:active{
+            background-color:rgb(10, 16, 27);
+        }
 </style>
 
-<form method=post action="/hello">
+<form method=post action="/hello2">
+    
+<h5>输入简体中文</h5>
 <dl>{{ render_field(myform.inputText) }}</dl>
 <input type=submit value=录入简体中文 name=录入简体中文>
+<br />
+<input type=submit value=查询简体中文 name=查询简体中文>
+<br />
+
+<h5>输入id</h5>
 <dl>{{ render_field(myform.inputId) }}</dl>
-<button onclick="copyFunction()">复制ID</button>
+<br />
+<div class ="btn" onclick="copyFunction()">复制ID</div>
+<br />
 <input type=submit value=查询ID name=查询ID>
+<br />
+<input type=submit value=编辑ID name=编辑ID>
+<br />
 <input type=submit value=删除ID name=删除ID>
 </form>
+
+
 
 <script>
 function copyFunction() {

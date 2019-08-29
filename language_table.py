@@ -3,7 +3,7 @@ from openpyxl import Workbook
 from openpyxl.reader.excel import load_workbook
 from openpyxl.utils import get_column_letter
 from flask import Flask, render_template, flash, request, redirect, url_for, send_file
-from wtforms import Form, BooleanField, TextField, PasswordField, validators
+from wtforms import Form, BooleanField, TextField, PasswordField, validators, IntegerField
 from time import sleep
 import random
 import datetime
@@ -57,7 +57,7 @@ class Table:
         self.table_dic[cn] = newid
         self.max_id_value += 1
         self.max_row += 1
-        
+
         self.sheet_src["{}{}".format('B', self.max_row)].value = cn
         self.sheet_src["{}{}".format('A', self.max_row)].value = newid
 
@@ -75,8 +75,15 @@ class Table:
             id_value = self.get_id(i)
             if id_value == lanId:
                 self.sheet_src.delete_rows(i, 1)
+                break
 
         self.max_row = self.sheet_src.max_row
+
+    def change(self, lanId, cn):
+        for i in range(self.id_start_row, self.max_row + 1):
+            id_value = self.get_id(i)
+            if id_value == lanId:
+                self.sheet_src["{}{}".format('B', i)].value = cn
 
     def save(self):
         # backup first
@@ -94,9 +101,13 @@ class Table:
         return str(value) if value is not None else ""
 
     def get_id(self, row):
+        print(row)
         return int(self.sheet_src["{}{}".format('A', row)].value)
     pass
+
+
 pass
+
 
 class MyForm(Form):
     inputText = TextField('', [])
@@ -110,20 +121,35 @@ def save_not_wait():
     except requests.exceptions.ReadTimeout:
         pass
 
+
+def save_history(info):
+    with open("history.txt", "a+") as f:
+        f.write(
+            "{} {}</br>\n".format(datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), info))
+
+
 app = Flask(__name__)
 
-@app.route('/hello', methods=['GET', 'POST'])
+def representsInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+@app.route('/hello2', methods=['GET', 'POST'])
 def hello():
     if table.error_txt is not None:
         return table.error_txt
 
     form = MyForm(request.form)
+    print(request.form)
 
     if request.method == 'POST' and form.validate():
 
         flash_info = None
 
-        if "录入简体中文" in request.form:
+        if "录入简体中文" in request.form or "查询简体中文" in request.form:
             if not form.inputText.data:
                 flash_info = "text输入为空"
             else:
@@ -132,43 +158,62 @@ def hello():
                         form.inputText.data, table.table_dic[form.inputText.data])
                     form.inputId.data = table.table_dic[form.inputText.data]
                 else:
-                    form.inputId.data = table.insert(form.inputText.data)
-                    flash_info = "录入 \"{}\"，id为{}".format(
-                        form.inputText.data, table.table_dic[form.inputText.data])
-                    save_not_wait()
+                    if "录入简体中文" in request.form:
+                        form.inputId.data = table.insert(form.inputText.data)
+                        flash_info = "录入 \"{}\"，id为{}".format(
+                            form.inputText.data, table.table_dic[form.inputText.data])
+                        save_history(flash_info)
+                        save_not_wait()
+                    else:
+                        flash_info = "\"{}\" 不存在!".format(form.inputText.data)
                 pass
             pass
-        elif "查询ID" or "删除ID" in request.form:
+        elif "查询ID" in request.form or "删除ID"in request.form or "编辑ID" in request.form:
             if not form.inputId.data:
                 flash_info = "id输入为空"
+            elif not representsInt(form.inputId.data):
+                 flash_info = "请输入int类型"
             else:
                 query_result = None
+                form_id = int(form.inputId.data)
+
                 for cn, id in table.table_dic.items():
-                    if str(id) == form.inputId.data:
+                    if id == form_id:
                         query_result = cn
                         break
                 if query_result is None:
-                    flash_info = "id {} 未找到".format(form.inputId.data)
+                    flash_info = "id {} 未找到".format(form_id)
                 else:
-                    flash_info = "id:{} -> {}".format(id, query_result)
-                    if "删除ID" in request.form:
-                        return "未开放!"
-                        # table.remove(query_result)
-                        # flash_info += ", 已删除!"
-                        # save_not_wait()
+                    flash_info = "id:{} -> \"{}\"".format(id, query_result)
+                    if "编辑ID" in request.form:
+                        if not form.inputText.data:
+                            flash_info = "text输入为空"
+                        elif form.inputText.data in table.table_dic:
+                             flash_info = "存在 \"{}\"，id为{}".format(
+                                 form.inputText.data, table.table_dic[form.inputText.data])
+                        else:
+                            flash_info = "编辑 {} -> {} -> {}".format(
+                                form_id, query_result, form.inputText.data)
+                            table.change(form_id, form.inputText.data)
+                            save_history(flash_info)
+                            save_not_wait()
+                    elif "删除ID" in request.form:
+                        table.remove(query_result)
+                        flash_info = "删除 " + flash_info
+                        save_history(flash_info)
+                        save_not_wait()
                     pass
                 pass
             pass
-        else:
-            return "unknown action"
+        
 
         flash(flash_info)
 
-    info = "正在托管{}，当前文本数量: {}".format(table.path_src, len(table.table_dic))
+    info = "正在托管{}，文本数量: {} 最高行数: {} 最大ID: {}".format(table.path_src, len(table.table_dic), table.max_row, table.max_id_value)
     return render_template('hello.html', myform=form, info=info)
 
 
-@app.route('/query')
+@app.route('/query2')
 def query():
     content = request.args.get('content')
     save = request.args.get('save') == "1"
@@ -183,6 +228,16 @@ def query():
         save_not_wait()
 
     return result
+
+
+@app.route('/history')
+def history():
+    content = "None"
+    if os.path.exists("history.txt"):
+        with open("history.txt", "r") as f:
+            content = f.read()
+
+    return content
 
 
 @app.route('/save')
@@ -260,4 +315,3 @@ if __name__ == "__main__":
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.secret_key = 'some_secret'
     app.run(debug=True, host="0.0.0.0", threaded=False, processes=0, port=5000)
-    
