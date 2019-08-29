@@ -101,7 +101,6 @@ class Table:
         return str(value) if value is not None else ""
 
     def get_id(self, row):
-        print(row)
         return int(self.sheet_src["{}{}".format('A', row)].value)
     pass
 
