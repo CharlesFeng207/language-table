@@ -137,7 +137,7 @@ def representsInt(s):
     except ValueError:
         return False
 
-@app.route('/hello2', methods=['GET', 'POST'])
+@app.route('/hello', methods=['GET', 'POST'])
 def hello():
     if table.error_txt is not None:
         return table.error_txt
@@ -213,7 +213,7 @@ def hello():
     return render_template('hello.html', myform=form, info=info)
 
 
-@app.route('/query2')
+@app.route('/query')
 def query():
     content = request.args.get('content')
     save = request.args.get('save') == "1"
