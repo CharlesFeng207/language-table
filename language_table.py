@@ -173,6 +173,7 @@ def getbytes():
         for lantype in Language_pb2.LanguageType.values():
             s = table.get_lan(i, lantype)
             info.content.append(s.encode('utf-8'))
+         
         proto_table.infos.append(info)
 
     with open(bytes_path, "wb+") as f:
