@@ -132,6 +132,7 @@ def query():
         result = str(table.table_dic[content])
     else:
         result = str(table.insert(content))
+        save_history("录入 \"{}\"，id为{}, query save {}".format(content, result, save))
 
     if save:
         save_not_wait()
