@@ -173,7 +173,7 @@ def getbytes():
         for lantype in Language_pb2.LanguageType.values():
             s = table.get_lan(i, lantype)
             if info.id != 0 and s == "":
-                s = "[{}没填翻译!] {}".format(info.id, lantype, table.get_lan(i, Language_pb2.ch))
+                s = "[{}没填翻译!] {}".format(info.id, table.get_lan(i, Language_pb2.ch))
             info.content.append(s.encode('utf-8'))
          
         proto_table.infos.append(info)
