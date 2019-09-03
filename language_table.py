@@ -155,7 +155,7 @@ def edit():
 
     table.change(lanId, query_cn, content, lanType)
 
-    save_history("编辑 {} -> {} -> {}, from edit lanType:{}".format(lanId, query_cn, content, lanType))
+    save_history("编辑 {} -> {}, from edit lanType:{}".format(lanId, content, lanType))
     save_not_wait()
 
     return "成功"
