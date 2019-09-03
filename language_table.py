@@ -52,7 +52,6 @@ def hello():
         return table.error_txt
 
     form = MyForm(request.form)
-    print(request.form)
 
     if request.method == 'POST' and form.validate():
 
@@ -103,7 +102,7 @@ def hello():
                         else:
                             flash_info = "编辑 {} -> {} -> {}".format(
                                 form_id, query_cn, form.inputText.data)
-                            table.change(form_id, query_cn, form.inputText.data)
+                            table.change(form_id, query_cn, form.inputText.data, Language_pb2.ch)
                             save_history(flash_info)
                             save_not_wait()
                     elif "删除ID" in request.form:
@@ -132,12 +131,34 @@ def query():
         result = str(table.table_dic[content])
     else:
         result = str(table.insert(content))
-        save_history("录入 \"{}\"，id为{}, query save {}".format(content, result, save))
+        save_history("录入 \"{}\"，id为{}, from query save:{}".format(content, result, save))
 
     if save:
         save_not_wait()
 
     return result
+    
+@app.route('/edit')
+def edit():
+    lanId = int(request.args.get('id'))
+    content = request.args.get('content')
+    lanType = int(request.args.get('lanType'))
+
+    query_cn = None
+    for cn, id in table.table_dic.items():
+        if id == lanId:
+            query_cn = cn
+            break
+            
+    if query_cn is None:
+        return "id未能找到"
+
+    table.change(lanId, query_cn, content, lanType)
+
+    save_history("编辑 {} -> {} -> {}, from edit lanType:{}".format(lanId, query_cn, content, lanType))
+    save_not_wait()
+
+    return "成功"
 
 
 @app.route('/history')

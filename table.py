@@ -65,17 +65,18 @@ class Table:
 
         self.max_row = self.sheet_src.max_row
 
-    def change(self, lanId, oldcn, cn):
-        if oldcn not in self.table_dic:
-            return
+    def change(self, lanId, oldtxt, newTxt, lanType):
+        if lanType == Language_pb2.ch:
+            if oldtxt not in self.table_dic:
+                return
 
-        del self.table_dic[oldcn]
-        self.table_dic[cn] = lanId
+            del self.table_dic[oldtxt]
+            self.table_dic[newTxt] = lanId
  
         for i in range(self.id_start_row, self.max_row + 1):
             id_value = self.get_id(i)
             if id_value == lanId:
-                self.sheet_src["{}{}".format('B', i)].value = cn
+                self.sheet_src["{}{}".format(self.get_column_letter_by_lan(lanType), i)].value = newTxt
                 break
 
     def save(self):
@@ -89,12 +90,16 @@ class Table:
         self.workbook_src.save(self.path_src)
 
     def get_lan(self, row, lanType):
-        col = get_column_letter(lanType+2)  # cn 2 en 3 zh 4 jp 5 ko 6
+        col = self.get_column_letter_by_lan(lanType)
         value = self.sheet_src["{}{}".format(col, row)].value
         return str(value) if value is not None else ""
 
     def get_id(self, row):
         return int(self.sheet_src["{}{}".format('A', row)].value)
+    
+    def get_column_letter_by_lan(self, lanType):
+        return get_column_letter(lanType+2)  # cn 2 en 3 zh 4 jp 5 ko 6
+
     pass
 
 
