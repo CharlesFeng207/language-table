@@ -21,7 +21,7 @@ def process_sql(func):
 
 def save_history(info):
     with open("history.txt", "a+") as f:
-        t = datetime.datetime.now().strftime(" % m/%d/%Y, % H: % M: % S")
+        t = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         f.write(f"{t} {info}</br>\n")
 
 
