@@ -27,7 +27,6 @@ def convert(lanType):
 if __name__ == "__main__":
     db = pymysql.connect("localhost", "root", "", "language")
     cursor = db.cursor()
-
     cursor.execute("SELECT * FROM language;")
     result = cursor.fetchall()
     cursor.close()

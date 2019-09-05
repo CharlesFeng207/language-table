@@ -167,7 +167,7 @@ def export_workbook():
     for i, data in enumerate(result):
         nsheet[f"A{i+1}"].value = data[0]  # id
         for lantype in Language_pb2.LanguageType.values():
-            nsheet[f"{get_column_letter(lantype+1)}{i+1}"].value = data[lantype+1]
+            nsheet[f"{get_column_letter(lantype+2)}{i+1}"].value = data[lantype+1]
     return nwb
 
 
