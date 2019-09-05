@@ -51,6 +51,8 @@ def hello():
                             flash_info = "录入操作失败!"
                     else:
                         flash_info = f"\"{form.inputText.data}\" 不存在!"
+                        pass
+                    pass
                 pass
             pass
         elif "查询ID" in request.form or "删除ID"in request.form or "编辑ID" in request.form:
