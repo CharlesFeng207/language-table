@@ -2,6 +2,9 @@ import pymysql
 import datetime
 import Language_pb2
 from Language_pb2 import LanguageTable, LanguageInfo
+from openpyxl import Workbook
+from openpyxl.reader.excel import load_workbook
+from openpyxl.utils import get_column_letter
 
 
 def process_sql(func):
@@ -40,7 +43,7 @@ def query_id(cn):
 
     def do(con, cursor):
         nonlocal result
-        rows = cursor.execute("select lanId from language where cn=%s", cn)
+        rows = cursor.execute("select lanId from language where lan0=%s", cn)
         if rows > 0:
             result = cursor.fetchone()[0]
 
@@ -53,7 +56,8 @@ def query_cn(lanId):
 
     def do(con, cursor):
         nonlocal result
-        rows = cursor.execute("select cn from language where lanId=%s", lanId)
+        rows = cursor.execute(
+            "select lan0 from language where lanId=%s", lanId)
         if rows > 0:
             result = cursor.fetchone()[0]
 
@@ -66,7 +70,8 @@ def insert_cn(cn):
 
     def do(con, cursor):
         nonlocal result
-        rows = cursor.execute("INSERT INTO language (cn) VALUES ( %s)", cn)
+        rows = cursor.execute("INSERT INTO language (lan0) VALUES ( %s)", cn)
+        con.commit()
         if rows > 0:
             result = query_id(cn)
 
@@ -78,28 +83,23 @@ def insert_cn(cn):
     return result
 
 
-def get_lanType_name(lanType):
-    if lanType == Language_pb2.ch:
-        return "cn"
-    elif lanType == Language_pb2.en:
-        return "en"
-    elif lanType == Language_pb2.zh:
-        return "zh"
-    elif lanType == Language_pb2.jp:
-        return "jp"
-    elif lanType == Language_pb2.ko:
-        return "ko"
-    return None
-
-
 def edit_txt(lanId, lanType, newTxt):
     result = False
 
-    col = get_lanType_name(lanType)
+    col = "lan" + str(lanType)
+
+    def do(con, cursor):
+        nonlocal result
+        rows = cursor.execute(
+            "UPDATE language SET {}=%s WHERE lanId=%s;".format(col), (newTxt, lanId))
+        con.commit()
+        result = rows > 0
+
+    process_sql(do)
 
     if result:
         save_history(
-            "编辑 {} -> {}, lan:{} ".format(lanId, content, lanType))
+            "编辑 {} -> {}, lan:{} ".format(lanId, newTxt, lanType))
 
     return result
 
@@ -110,8 +110,8 @@ def delete_lanId(lanId):
     def do(con, cursor):
         nonlocal result
         rows = cursor.execute("DELETE FROM language WHERE lanId=%s;", lanId)
-        if rows > 0:
-            result = True
+        con.commit()
+        result = rows > 0
 
     process_sql(do)
 
@@ -122,24 +122,52 @@ def delete_lanId(lanId):
 
 
 def export_proto_table():
-    #  proto_table = LanguageTable()
+    result = None
 
-    # # id:0 "" "" ""
-    # proto_table.infos.append(LanguageInfo())
+    def do(con, cursor):
+        nonlocal result
+        cursor.execute("SELECT * FROM language;")
+        result = cursor.fetchall()
 
-    # for i in range(table.id_start_row, table.sheet_src.max_row + 1):
-    #     info = LanguageInfo()
+    process_sql(do)
 
-    #     info.id = table.get_id(i)
-    #     for lantype in Language_pb2.LanguageType.values():
-    #         s = table.get_lan(i, lantype)
-    #         if info.id != 0 and s == "":
-    #             s = "[{}没填翻译!] {}".format(info.id, table.get_lan(i, Language_pb2.ch))
-    #         info.content.append(s.encode('utf-8'))
+    proto_table = LanguageTable()
 
-    #     proto_table.infos.append(info)
-    return None
+    # id:0 "" "" ""
+    proto_table.infos.append(LanguageInfo())
+
+    for data in result:
+        info = LanguageInfo()
+        info.id = data[0]
+        for lantype in Language_pb2.LanguageType.values():
+            info.content.append(data[lantype+1].encode('utf-8'))
+        proto_table.infos.append(info)
+        pass
+
+    return proto_table
 
 
 def export_workbook():
-    return None
+    result = None
+
+    def do(con, cursor):
+        nonlocal result
+        cursor.execute("SELECT * FROM language;")
+        result = cursor.fetchall()
+
+    process_sql(do)
+
+    nwb = Workbook()
+    nsheet = nwb.active
+
+    for i, data in enumerate(result):
+        nsheet["A{}".format(i+1)].value = data[0]  # id
+        for lantype in Language_pb2.LanguageType.values():
+            nsheet["{}{}".format(get_column_letter(
+                lantype+1), i+1)].value = data[lantype+1]
+    return nwb
+
+
+if __name__ == "__main__":
+    # export_workbook()
+    pass
