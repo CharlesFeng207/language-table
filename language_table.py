@@ -39,20 +39,18 @@ def hello():
             else:
                 result = model.query_id(form.inputText.data)
                 if result != -1:
-                    flash_info = "存在 \"{}\"，id为{}".format(
-                        form.inputText.data, result)
+                    flash_info = f"存在 \"{form.inputText.data}\"，id为{result}"
                     form.inputId.data = str(result)
                 else:
                     if "录入简体中文" in request.form:
                         newId = model.insert_cn(form.inputText.data)
                         if newId != -1:
                             form.inputId.data = str(newId)
-                            flash_info = "录入 \"{}\"，id为{}".format(
-                                form.inputText.data, newId)
+                            flash_info = f"录入 \"{form.inputText.data}\"，id为{newId}"
                         else:
                             flash_info = "录入操作失败!"
                     else:
-                        flash_info = "\"{}\" 不存在!".format(form.inputText.data)
+                        flash_info = f"\"{form.inputText.data}\" 不存在!"
                 pass
             pass
         elif "查询ID" in request.form or "删除ID"in request.form or "编辑ID" in request.form:
@@ -65,20 +63,19 @@ def hello():
                 id_cn = model.query_cn(form_id)
 
                 if id_cn is None:
-                    flash_info = "id {} 未找到".format(form_id)
+                    flash_info = f"id {form_id} 未找到"
                 else:
-                    flash_info = "id:{} -> \"{}\"".format(form_id, id_cn)
+                    flash_info = f"id:{form_id} -> \"{id_cn}\""
                     if "编辑ID" in request.form:
                         if not form.inputText.data:
                             flash_info = "text输入为空"
                         else:
                             result = model.query_id(form.inputText.data)
                             if result != -1:
-                                flash_info = "存在 \"{}\"，id为{}".format(
-                                    form.inputText.data, result)
+                                flash_info = f"存在 \"{ form.inputText.data}\"，id为{result}"
                             else:
                                 if model.edit_txt(form_id, Language_pb2.ch, form.inputText.data):
-                                    flash_info = "编辑 {} -> {} -> {}".format(form_id, id_cn, form.inputText.data)
+                                    flash_info = f"编辑 {form_id} -> {id_cn} -> {form.inputText.data}"
                                 else:
                                     flash_info = "编辑操作失败!"
                     elif "删除ID" in request.form:
@@ -130,7 +127,7 @@ def history():
 
 @app.route('/getexcel')
 def getexcel():
-    excel_path = "Language_test.xlsx"
+    excel_path = "Language.xlsx"
 
     workbook = model.export_workbook()
     workbook.save(excel_path)
@@ -156,4 +153,4 @@ LoggerInit.init(level=logging.INFO, filemode='a')
 if __name__ == "__main__":
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     app.secret_key = 'some_secret'
-    app.run(debug=True, host="0.0.0.0", threaded=False, processes=0, port=5000)
+    app.run(debug=True, host="0.0.0.0", threaded=True, processes=0, port=5000)
