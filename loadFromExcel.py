@@ -21,7 +21,7 @@ if __name__ == "__main__":
     cursor.close()
     db.close()
 
-    path_src = "input2.xlsx"
+    path_src = "Language.xlsx"
     workbook_src = load_workbook(path_src, data_only=True)
     shert_name = list(filter(lambda x:x[0] != '@' and x[0] != '#', workbook_src.sheetnames))[0]
     print(shert_name)

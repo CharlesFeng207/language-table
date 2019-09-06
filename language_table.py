@@ -38,13 +38,13 @@ def hello():
                 flash_info = "text输入为空"
             else:
                 result = model.query_id(form.inputText.data)
-                if result != -1:
+                if result != 0:
                     flash_info = f"存在 \"{form.inputText.data}\"，id为{result}"
                     form.inputId.data = str(result)
                 else:
                     if "录入简体中文" in request.form:
                         newId = model.insert_cn(form.inputText.data)
-                        if newId != -1:
+                        if newId != 0:
                             form.inputId.data = str(newId)
                             flash_info = f"录入 \"{form.inputText.data}\"，id为{newId}"
                         else:
@@ -102,10 +102,17 @@ def hello():
 def query():
     content = request.args.get('content')
 
-    if model.query_id(content) == -1:
+    if model.query_id(content) == 0:
         return model.insert_cn(content)
 
-    return model.query_id(content)[1]  # return id
+    return str(model.query_id(content))  # return id
+
+@app.route('/query_cn')
+def query_cn():
+    lanId = int(request.args.get('lanId'))
+    result = model.query_cn(lanId)
+    result = result if result is not None else ""
+    return result
 
 
 @app.route('/edit')

@@ -39,7 +39,7 @@ def query_statistic_info():
 
 
 def query_id(cn):
-    result = -1
+    result = 0
 
     def do(con, cursor):
         nonlocal result
@@ -66,7 +66,7 @@ def query_cn(lanId):
 
 
 def insert_cn(cn):
-    result = -1
+    result = 0
 
     def do(con, cursor):
         nonlocal result
@@ -77,7 +77,7 @@ def insert_cn(cn):
 
     process_sql(do)
 
-    if result != -1:
+    if result != 0:
         save_history(f"录入 \"{cn}\"，id为{result}")
 
     return result
@@ -160,14 +160,15 @@ def export_workbook():
         result = cursor.fetchall()
 
     process_sql(do)
-
     nwb = Workbook()
     nsheet = nwb.active
 
     for i, data in enumerate(result):
         nsheet[f"A{i+1}"].value = data[0]  # id
         for lantype in Language_pb2.LanguageType.values():
-            nsheet[f"{get_column_letter(lantype+2)}{i+1}"].value = data[lantype+1]
+            col = get_column_letter(lantype+2)
+            nsheet[f"{col}{i+1}"].value = data[lantype+1]
+            nsheet.column_dimensions[col].width = 50
     return nwb
 
 
