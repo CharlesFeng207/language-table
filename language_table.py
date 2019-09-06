@@ -103,7 +103,7 @@ def query():
     content = request.args.get('content')
 
     if model.query_id(content) == 0:
-        return model.insert_cn(content)
+        return str(model.insert_cn(content))
 
     return str(model.query_id(content))  # return id
 
