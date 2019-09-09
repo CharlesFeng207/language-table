@@ -73,7 +73,7 @@ def hello():
                             flash_info = "text输入为空"
                         else:
                             result = model.query_id(form.inputText.data)
-                            if result != -1:
+                            if result != 0:
                                 flash_info = f"存在 \"{ form.inputText.data}\"，id为{result}"
                             else:
                                 if model.edit_txt(form_id, Language_pb2.ch, form.inputText.data):
@@ -111,7 +111,7 @@ def query():
 def query_cn():
     lanId = int(request.args.get('lanId'))
     result = model.query_cn(lanId)
-    result = result if result is not None else ""
+    result = str(result) if result is not None else ""
     return result
 
 
@@ -120,7 +120,7 @@ def edit():
     lanId = int(request.args.get('id'))
     content = request.args.get('content')
     lanType = int(request.args.get('lanType'))
-    return model.edit_txt(lanId, lanType, content)
+    return str(model.edit_txt(lanId, lanType, content))
 
 
 @app.route('/history')

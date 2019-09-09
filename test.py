@@ -22,7 +22,7 @@ def handle(cell):
 
 if __name__ == "__main__":
 
-
+    
     path_src = "Language.xlsx"
     workbook_src = load_workbook(path_src, data_only=True)
     shert_name = list(
@@ -30,10 +30,11 @@ if __name__ == "__main__":
     print(shert_name)
 
     sheet_src = workbook_src[shert_name]
-
+    
     start_row = 3
 
     db = pymysql.connect("localhost", "root", "", "language")
+    
     # 使用cursor()方法创建一个游标对象
     cursor = db.cursor()
     # cursor.execute(
