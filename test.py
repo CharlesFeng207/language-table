@@ -21,8 +21,6 @@ def handle(cell):
 
 
 if __name__ == "__main__":
-
-    
     path_src = "Language.xlsx"
     workbook_src = load_workbook(path_src, data_only=True)
     shert_name = list(

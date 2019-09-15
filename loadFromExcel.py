@@ -3,6 +3,7 @@ from openpyxl import Workbook
 from openpyxl.reader.excel import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.comments import Comment
+from openpyxl.styles import PatternFill, colors
 import requests
 from requests import Response
 import os
@@ -10,6 +11,7 @@ import sys
 import pymysql
 import Language_pb2
 import model
+
 
 if __name__ == "__main__":
     db = pymysql.connect("localhost", "root", "", "language")
@@ -34,8 +36,11 @@ if __name__ == "__main__":
         lanId = int(sheet_src[f"A{row}"].value)
         if lanId in result:
             for lantype in Language_pb2.LanguageType.values():
-                cell_value = sheet_src[f"{get_column_letter(lantype + 2)}{row}"].value
-                newTxt = str(cell_value) if cell_value is not None else ""
+                cell = sheet_src[f"{get_column_letter(lantype + 2)}{row}"]
+                if cell.fill.end_color.index == colors.BLACK: # only colored cell
+                    continue
+
+                newTxt = str(cell.value) if cell.value is not None else ""
 
                 oldTxt = result[lanId][lantype+1]
 

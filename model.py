@@ -64,6 +64,19 @@ def query_cn(lanId):
     process_sql(do)
     return result
 
+def query_all(lanId):
+    result = None
+
+    def do(con, cursor):
+        nonlocal result
+        rows = cursor.execute(
+            "select * from language where lanId=%s", lanId)
+        if rows > 0:
+            result = cursor.fetchone()
+
+    process_sql(do)
+    return result
+
 
 def insert_cn(cn):
     result = 0

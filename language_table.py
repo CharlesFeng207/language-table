@@ -1,6 +1,5 @@
 # coding:utf-8
 import model
-
 from flask import Flask, render_template, flash, request, redirect, url_for, send_file
 from wtforms import Form, BooleanField, TextField, PasswordField, validators, IntegerField
 import os
@@ -88,6 +87,7 @@ def hello():
                         form.inputText.data = ""
                     else:
                         form.inputText.data = id_cn
+                        flash_info = str(model.query_all(form_id))
                     pass
                 pass
             pass
@@ -157,7 +157,7 @@ def getbytes():
 
 
 flask_port = 5000
-LoggerInit.init(level=logging.INFO, filemode='a')
+LoggerInit.init(level=logging.INFO, filemode='w')
 
 if __name__ == "__main__":
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0

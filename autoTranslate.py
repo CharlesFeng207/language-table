@@ -49,7 +49,7 @@ if __name__ == "__main__":
             t = baidu_translate(chtext, "zh", convert(lanType))
             print(t)
             model.edit_txt(lanId, lanType, t)
-            time.sleep(0.05)
+            # time.sleep(0.05)
         pass
 
     pass
