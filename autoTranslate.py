@@ -35,7 +35,7 @@ if __name__ == "__main__":
     pending = []
     for data in result:
         for lantype in Language_pb2.LanguageType.values():
-            if lantype == Language_pb2.ch:
+            if lantype == Language_pb2.ch or lantype == Language_pb2.jp or lantype == Language_pb2.ko:
                 continue
 
             t = data[lantype+1]
