@@ -156,8 +156,8 @@ def export_proto_table():
         info = LanguageInfo()
         info.id = data[0]
         for lantype in Language_pb2.LanguageType.values():
-            # 日文韩文暂时未能准备好，强制转换为英文
-            if lantype == Language_pb2.ko or lantype == Language_pb2.jp:
+            # 日文暂时未能准备好，强制转换为英文
+            if lantype == Language_pb2.jp:
                 lantype = Language_pb2.en
             
             t = data[lantype+1] if data[lantype+1] is not None else ""
