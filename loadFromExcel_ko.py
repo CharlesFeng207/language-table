@@ -36,7 +36,8 @@ if __name__ == "__main__":
         newTxt = str(cell_ko.value) if cell_ko.value is not None else ""
         p = (lanId, "", newTxt, lantype)
         pending.append(p)
-        
+    
+    print(pending[0:10])
     print(len(pending))
 
     if input("press y to continue...") == "y":
