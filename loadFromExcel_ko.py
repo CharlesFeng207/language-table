@@ -14,14 +14,6 @@ import model
 
 
 if __name__ == "__main__":
-    db = pymysql.connect("localhost", "root", "", "language")
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM language;")
-    t = cursor.fetchall()
-    result = {i[0]: i for i in t}
-
-    cursor.close()
-    db.close()
 
     path_src = "Language3.xlsx"
     workbook_src = load_workbook(path_src, data_only=True)
